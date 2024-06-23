@@ -443,10 +443,12 @@ class JominiRunTigerCommand:
         settings: sublime.Settings,
         exe_and_conf_path="/ImperatorTools/ImperatorTiger/imperator-tiger",
         exe_name="imperator-tiger",
+        execute_tiger_cmd_name="execute_tiger"
     ):
         self.settings = settings
         self.exe_and_conf_path = exe_and_conf_path
         self.exe_name = exe_name
+        self.execute_tiger_cmd_name = execute_tiger_cmd_name
 
     def _run(self):
         mod_path = self.settings.get("TigerModPath")
@@ -468,4 +470,4 @@ class JominiRunTigerCommand:
             cmd = [tiger_exe_path, mod_path, "--json"]
 
         sublime.status_message(f"{self.exe_name} has started running...")
-        window.run_command("execute_tiger", {"cmd": cmd})
+        window.run_command(self.execute_tiger_cmd_name, {"cmd": cmd})

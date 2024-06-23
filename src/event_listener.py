@@ -3,9 +3,10 @@ The main event listener for the plugin, this is where most of the plugin feature
 The init function of the event listener is treated as the main entry point for the plugin.
 """
 
+import re
+import inspect
 from abc import ABC, abstractmethod
 from typing import Set, Union, List, Tuple
-import inspect
 
 import sublime
 
@@ -329,3 +330,54 @@ class JominiEventListener(ABC):
                     name,
                 )
                 break
+
+    def check_for_patterns_and_set_flag(
+        self,
+        patterns_list: List[str],
+        flag_name: str,
+        view: sublime.View,
+        line: str,
+        point: int,
+    ):
+        for pattern in patterns_list:
+            r = re.search(rf'\b{pattern}\s?=\s?(")?', line)
+            if not r:
+                continue
+            y = 0
+            idx = line.index(pattern) + view.line(point).a + len(pattern) + 2
+            if r.groups()[0] == '"':
+                y = 2
+            if idx == point or idx + y == point or idx + 1 == point:
+                setattr(self, flag_name, True)
+                view.run_command("auto_complete")
+                return True
+        return False
+
+    def check_pattern_and_set_flag(
+        self, pattern: str, flag_name: str, view: sublime.View, line: str, point: int
+    ):
+        if pattern in line:
+            idx = line.index(pattern) + view.line(point).a + len(pattern)
+            if idx == point:
+                setattr(self, flag_name, True)
+                view.run_command("auto_complete")
+
+    def check_for_simple_completions(self, view: sublime.View, point: int):
+        """
+        Check if the current cursor position should trigger a autocompletion item
+        this is for simple declarations like: remove_building = CursorHere
+        """
+        for i in self.auto_complete_fields.keys():
+            setattr(self, i, False)
+
+        if view.substr(point) == "=":
+            return
+
+        line = view.substr(view.line(point))
+
+        for patterns, flag in self.game_data.simple_completion_pattern_flag_pairs: # type: ignore
+            if self.check_for_patterns_and_set_flag(patterns, flag, view, line, point):
+                return
+
+        for pattern, flag in self.game_data.simple_completion_scope_pattern_flag_pairs: # type: ignore
+            self.check_pattern_and_set_flag(pattern, flag, view, line, point)

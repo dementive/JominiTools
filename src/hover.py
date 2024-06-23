@@ -13,6 +13,7 @@ from .css import CSS
 from .jomini_objects import PdxColorObject
 from .jomini import PdxScriptObject
 from .utils import IterViews, get_file_name, get_syntax_name
+from .game_data import JominiGameData
 
 
 class Hover:
@@ -124,6 +125,218 @@ class Hover:
                 max_width=1024,
             )
             return
+
+    def show_gui_docs_popup(
+        self, view: sublime.View, point: int, item: str, GameData: JominiGameData
+    ):
+        data = GameData.gui_content[item]
+        color = data[0]
+        desc = data[1]
+        example = data[2]
+        if example:
+            example = f'<div class="box-for-codebox"><div class="codebox"><code>{example}</code></div></div>'
+        if item in example:
+            if color == "green":
+                example = example.replace(
+                    item, f'<code class="green-text">{item}</code>'
+                )
+            if color == "red":
+                example = example.replace(item, f'<code class="red-text">{item}</code>')
+            if color == "yellow":
+                example = example.replace(
+                    item, f'<code class="yellow-text">{item}</code>'
+                )
+            if color == "blue":
+                example = example.replace(
+                    item, f'<code class="blue-text">{item}</code>'
+                )
+            if color == "purple":
+                example = example.replace(
+                    item, f'<code class="purple-text">{item}</code>'
+                )
+            if color == "orange":
+                example = example.replace(
+                    item, f'<code class="orange-text">{item}</code>'
+                )
+
+        if item == "template" or item == "using":
+            template_example = '<div class="box-for-codebox"><div class="codebox code">template example_name {<br>&nbsp;&nbsp;&nbsp;&nbsp;size = { 50 50 }<br>}<br></div></div>'
+            template_example = template_example.replace(
+                "template", '<code class="purple-text">template</code>'
+            )
+            template_example_text = (
+                '<p class="code-header">Example template definition:</p>'
+            )
+            template_example_text2 = (
+                '<br><br><br><p class="code-header">Example template usage:</p>'
+            )
+            example = example.replace("using", '<code class="green-text">using</code>')
+            example = (
+                template_example_text
+                + template_example
+                + template_example_text2
+                + example
+            )
+
+        if item == "block" or item == "blockoverride":
+            block_example = '<div class="box-for-codebox"><div class="codebox code">block "example_name" {<br>&nbsp;&nbsp;&nbsp;&nbsp;visible = no<br>}<br></div></div>'
+            block_example = block_example.replace(
+                "block", '<code class="red-text">block</code>'
+            )
+            block_example_text = '<p class="code-header">Example block definition:</p>'
+            block_example_text2 = (
+                '<br><br><br><p class="code-header">Example blockoverride:</p>'
+            )
+            example = '<div class="box-for-codebox"><div class="codebox code">blockoverride "example_name" {<br>&nbsp;&nbsp;&nbsp;&nbsp;visible = yes<br>}<br></div></div>'
+            example = example.replace(
+                "blockoverride", '<code class="red-text">blockoverride</code>'
+            )
+            example = block_example_text + block_example + block_example_text2 + example
+
+        if item == "type" or item == "types":
+            example = '<div class="box-for-codebox"><div class="codebox code">types My_Types<br>{<br>&nbsp;&nbsp;&nbsp;&nbsp;type widget_with_size = widget {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;size = { 50 50 }<br>&nbsp;&nbsp;&nbsp;&nbsp;}<br>}<br></div></div>'
+            example = example.replace("types", '<code class="purple-text">types</code>')
+            example = example.replace("type", '<code class="purple-text">type</code>')
+            type_example_text = '<p class="code-header">Example type definition:</p>'
+            example = type_example_text + example
+
+        hoverBody = """
+            <body id="vic-body">
+                <style>%s</style>
+                <p class=\"codedesc\">%s</p>
+                %s
+            </body>
+        """ % (
+            CSS().default,
+            desc,
+            example,
+        )
+
+        view.show_popup(
+            hoverBody,
+            flags=(
+                sublime.HIDE_ON_MOUSE_MOVE_AWAY
+                | sublime.COOPERATE_WITH_AUTO_COMPLETE
+                | sublime.HIDE_ON_CHARACTER_EVENT
+            ),
+            location=point,
+            max_width=1024,
+        )
+
+    def show_gui_popup(
+        self, view: sublime.View, point: int, PdxObject: PdxScriptObject, header: str
+    ):
+        word_line_num = view.rowcol(point)[0] + 1
+        word_file = (
+            get_file_name(view).replace("\\", "/").rstrip("/").rpartition("/")[2]
+        )
+        definition = ""
+
+        if word_line_num != PdxObject.line:
+            definition = f'<p><b>Definition of&nbsp;&nbsp;</b><tt class="variable">{PdxObject.key}</tt></p>'
+            goto_args = {"path": PdxObject.path, "line": PdxObject.line}
+            goto_url = sublime.command_url("goto_script_object_definition", goto_args)
+            definition += (
+                """<a href="%s" title="Open %s and goto line %d">%s:%d</a>&nbsp;"""
+                % (
+                    goto_url,
+                    PdxObject.path.replace("\\", "/").rstrip("/").rpartition("/")[2],
+                    PdxObject.line,
+                    PdxObject.path.replace("\\", "/").rstrip("/").rpartition("/")[2],
+                    PdxObject.line,
+                )
+            )
+            goto_right_args = {"path": PdxObject.path, "line": PdxObject.line}
+            goto_right_url = sublime.command_url(
+                "goto_script_object_definition_right", goto_right_args
+            )
+            definition += (
+                """<a class="icon" href="%s"title="Open Tab to Right of Current Selection">◨</a>&nbsp;<br>"""
+                % (goto_right_url)
+            )
+
+        references = []
+        ref = ""
+        for i in IterViews(sublime.windows()):
+            if not get_file_name(i).endswith(".gui"):
+                continue
+
+            view_region = sublime.Region(0, i.size())
+            view_str = i.substr(view_region)
+            for j, line in enumerate(view_str.splitlines()):
+                definition_found = False
+                if PdxObject.key in line:
+                    filename = (
+                        get_file_name(view)
+                        .replace("\\", "/")
+                        .rstrip("/")
+                        .rpartition("/")[2]
+                    )
+                    line_num = j + 1
+                    if word_line_num == line_num and word_file == filename:
+                        # Don't do current word
+                        continue
+                    elif line_num == PdxObject.line and i.file_name() == PdxObject.path:
+                        # Don't do definition
+                        continue
+                    if not definition_found:
+                        references.append(f"{i.file_name()}|{line_num}")
+
+        if references:
+            ref = f'<p><b>References to&nbsp;&nbsp;</b><tt class="variable">{PdxObject.key}</tt></p>'
+            for j, i in enumerate(references):
+                if j > 10:
+                    break
+                fname = i.split("|")[0]
+                shortname = fname.replace("\\", "/").rstrip("/").rpartition("/")[2]
+                line = i.split("|")[1]
+                goto_args = {"path": fname, "line": line}
+                goto_url = sublime.command_url(
+                    "goto_script_object_definition", goto_args
+                )
+                ref += (
+                    """<a href="%s" title="Open %s and goto line %s">%s:%s</a>&nbsp;"""
+                    % (
+                        goto_url,
+                        shortname,
+                        line,
+                        shortname,
+                        line,
+                    )
+                )
+                goto_right_args = {"path": fname, "line": line}
+                goto_right_url = sublime.command_url(
+                    "goto_script_object_definition_right", goto_right_args
+                )
+                ref += (
+                    """<a class="icon" href="%s"title="Open Tab to Right of Current Selection">◨</a>&nbsp;<br>"""
+                    % (goto_right_url)
+                )
+
+        link = definition + ref
+        if link:
+            hoverBody = """
+                <body id="vic-body">
+                    <style>%s</style>
+                    <h1>%s</h1>
+                    %s
+                </body>
+            """ % (
+                CSS().default,
+                header,
+                link,
+            )
+
+            view.show_popup(
+                hoverBody,
+                flags=(
+                    sublime.HIDE_ON_MOUSE_MOVE_AWAY
+                    | sublime.COOPERATE_WITH_AUTO_COMPLETE
+                    | sublime.HIDE_ON_CHARACTER_EVENT
+                ),
+                location=point,
+                max_width=1024,
+            )
 
     def show_popup_default(
         self,

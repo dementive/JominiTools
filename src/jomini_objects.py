@@ -12,6 +12,74 @@ from typing import Union
 from .jomini import PdxScriptObject, PdxScriptObjectType, GameObjectBase
 
 
+# Gui Class implementations
+class GuiType(GameObjectBase):
+    def __init__(self, mod_files, game_files):
+        super().__init__(mod_files, game_files)
+        self.get_data("gui")
+
+    def get_pdx_object_list(self, path: str) -> PdxScriptObjectType:
+        obj_list = list()
+        for dirpath, dirnames, filenames in os.walk(path):
+            for filename in [f for f in filenames if f.endswith(".gui")]:
+                if filename in self.ignored_files:
+                    continue
+                file_path = os.path.join(dirpath, filename)
+                if self.included_files:
+                    if filename not in self.included_files:
+                        continue
+                with open(file_path, "r", encoding="utf-8-sig") as file:
+                    for i, line in enumerate(file):
+                        if self.should_read(line):
+                            found_item = re.search(
+                                r"type\s([A-Za-z_][A-Za-z_0-9]*)\s?=", line
+                            )
+                            if found_item and found_item.groups()[0]:
+                                found_item = found_item.groups()[0]
+                                obj_list.append(
+                                    PdxScriptObject(found_item, file_path, i + 1)
+                                )
+        return PdxScriptObjectType(obj_list)
+
+    def should_read(self, x: str) -> bool:
+        # Check if a line should be read
+        out = re.search(r"type\s[A-Za-z_][A-Za-z_0-9]*\s?=", x)
+        return True if out else False
+
+
+class GuiTemplate(GameObjectBase):
+    def __init__(self, mod_files, game_files):
+        super().__init__(mod_files, game_files)
+        self.get_data("gui")
+
+    def get_pdx_object_list(self, path: str) -> PdxScriptObjectType:
+        obj_list = list()
+        for dirpath, dirnames, filenames in os.walk(path):
+            for filename in [f for f in filenames if f.endswith(".gui")]:
+                if filename in self.ignored_files:
+                    continue
+                file_path = os.path.join(dirpath, filename)
+                if self.included_files:
+                    if filename not in self.included_files:
+                        continue
+                with open(file_path, "r", encoding="utf-8-sig") as file:
+                    for i, line in enumerate(file):
+                        if self.should_read(line):
+                            found_item = re.search(
+                                r"template\s([A-Za-z_][A-Za-z_0-9]*)", line
+                            )
+                            if found_item and found_item.groups()[0]:
+                                found_item = found_item.groups()[0]
+                                obj_list.append(
+                                    PdxScriptObject(found_item, file_path, i + 1)
+                                )
+        return PdxScriptObjectType(obj_list)
+
+    def should_read(self, x: str) -> bool:
+        # Check if a line should be read
+        out = re.search(r"template\s[A-Za-z_][A-Za-z_0-9]*", x)
+        return True if out else False
+
 class ScriptValue(GameObjectBase):
     def __init__(self, mod_files, game_files):
         super().__init__(mod_files, game_files)
@@ -208,4 +276,6 @@ JominiObject = Union[
     ScriptedList,
     ScriptedGui,
     NamedColor,
+    GuiType,
+    GuiTemplate,
 ]
