@@ -4,6 +4,7 @@ All the code for handling the integration of imperator-tiger into the plugin.
 
 import json
 import os
+import sys
 
 import Default.exec
 import sublime
@@ -454,9 +455,10 @@ class JominiRunTigerCommand:
             return
 
         tiger_exe_path = self.settings.get("TigerBinaryPath")
-
+        system = sys.platform
+        file_ext = ".exe" if system == "Windows" or system == "win32" or system == "win" else ""
         if not os.path.exists(tiger_exe_path):
-            tiger_exe_path = sublime.packages_path() + f"{self.exe_and_conf_path}.exe"
+            tiger_exe_path = sublime.packages_path() + f"{self.exe_and_conf_path}{file_ext}"
         window = sublime.active_window()
 
         if not self.settings.get("TigerUseDefaultConfig"):
