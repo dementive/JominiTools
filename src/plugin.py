@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing_extensions import LiteralString
 
 import sublime
 
@@ -7,7 +6,7 @@ import sublime
 class JominiPlugin(ABC):
     @property
     @abstractmethod
-    def name(self) -> LiteralString:
+    def name(self) -> str:
         pass
 
     @property
@@ -17,16 +16,16 @@ class JominiPlugin(ABC):
 
     @property
     @abstractmethod
-    def script_syntax_name(self) -> LiteralString:
+    def script_syntax_name(self) -> str:
         pass
 
     @property
     @abstractmethod
-    def localization_syntax_name(self) -> LiteralString:
+    def localization_syntax_name(self) -> str:
         pass
 
     @property
-    def gui_syntax_name(self) -> LiteralString:
+    def gui_syntax_name(self) -> str:
         return "Jomini Gui"
 
     def valid_syntax(self, syntax_name: str) -> bool:

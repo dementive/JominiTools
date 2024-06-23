@@ -4,11 +4,10 @@ Class to handle generic tasks related to maintenance and updating of a sublime p
 
 import os
 import subprocess
-from typing_extensions import LiteralString
 
 
 class PluginManager:
-    def __init__(self, path_to_repository: str, repository_url: LiteralString):
+    def __init__(self, path_to_repository: str, repository_url: str):
         self.path_to_repository = path_to_repository
         self.repository_url = repository_url
 
