@@ -8,20 +8,21 @@ class PluginManager:
         self.repository_url = repository_url
 
     def auto_update_plugin(self, branch="main"):
+        # Ensure the path is correctly formatted for the OS
         normalized_path = os.path.normpath(self.path_to_repository)
-        print("AUTO UPDATING THE PLUGINIGSDHJIGHNSDIOGJKILDSJGFOIDSJGIODSJGIODSJIOJGIOSDJG")
+
         # Check if the directory exists and is a git repository
-        if not os.path.isdir(os.path.join(normalized_path, ".git")):
+        if not os.path.isdir(normalized_path):
             print(f"JominiTools: {normalized_path} does not exist or is not a git repository.")
             return
 
-        print(f"FETCHING FROM: {normalized_path}")
-        print(f"PATH: {normalized_path} IS: {'exists' if os.path.exists(normalized_path) else 'does not exist'}")
-
         try:
-            # Use shlex.split() to handle command arguments correctly
+            # Attempt to run git commands
             subprocess.run(shlex.split("git -C {} fetch".format(normalized_path)), check=True)
             subprocess.run(shlex.split("git -C {} checkout {}".format(normalized_path, branch)), check=True)
+        except FileNotFoundError as e:
+            print(f"JominiTools: Error: Could not find 'git'. Please ensure Git is installed and available in your PATH.")
+            return
         except subprocess.CalledProcessError as e:
             print(f"JominiTools: Failed to switch to the {branch} branch: {e}")
             return
