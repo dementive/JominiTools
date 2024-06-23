@@ -1,6 +1,5 @@
 import os
 import subprocess
-import shlex
 
 class PluginManager:
     def __init__(self, path_to_repository: str, repository_url: str):
@@ -8,17 +7,20 @@ class PluginManager:
         self.repository_url = repository_url
 
     def auto_update_plugin(self, branch="main"):
-        # Ensure the path is correctly formatted for the OS
         normalized_path = os.path.normpath(self.path_to_repository)
-
-        # Check if the directory exists and is a git repository
         if not os.path.isdir(normalized_path):
             print(f"JominiTools: {normalized_path} does not exist or is not a git repository.")
             return
 
+        startupinfo = None
+        if os.name == 'nt': # Don't show command prompt window on windows
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+
         try:
-            # Attempt to run git commands
-            subprocess.run(shlex.split("git -C {} checkout {}".format(normalized_path, branch)), check=True)
+            cmd = ["git", "-C", normalized_path, "checkout", branch]
+            print(f"CHECKOUT with: {cmd}")
+            subprocess.run(cmd, check=True, startupinfo=startupinfo)
         except FileNotFoundError as e:
             print(f"JominiTools: Error: Could not find 'git'. Please ensure Git is installed and available in your PATH.")
             return
@@ -26,13 +28,16 @@ class PluginManager:
             print(f"JominiTools: Failed to switch to the {branch} branch: {e}")
 
         try:
-            subprocess.run(shlex.split("git -C {} fetch".format(normalized_path)), check=True)
+            cmd = ["git", "-C", normalized_path, "fetch"]
+            print(f"FETCH with: {cmd}")
+            subprocess.run(cmd, check=True, startupinfo=startupinfo)
         except subprocess.CalledProcessError as e:
             print(f"JominiTools: Failed to fetch from the {branch} branch: {e}")
             return
 
         try:
-            subprocess.run(shlex.split("git -C {} pull".format(normalized_path)), check=True)
+            cmd = ["git", "-C", normalized_path, "pull"]
             print(f"JominiTools: Pulled changes for {normalized_path}")
+            subprocess.run(cmd, check=True, startupinfo=startupinfo)
         except subprocess.CalledProcessError as e:
             print(f"JominiTools: Failed to pull from the {branch} branch: {e}")
