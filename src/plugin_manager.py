@@ -18,17 +18,21 @@ class PluginManager:
 
         try:
             # Attempt to run git commands
-            subprocess.run(shlex.split("git -C {} fetch".format(normalized_path)), check=True)
             subprocess.run(shlex.split("git -C {} checkout {}".format(normalized_path, branch)), check=True)
         except FileNotFoundError as e:
             print(f"JominiTools: Error: Could not find 'git'. Please ensure Git is installed and available in your PATH.")
             return
         except subprocess.CalledProcessError as e:
             print(f"JominiTools: Failed to switch to the {branch} branch: {e}")
+
+        try:
+            subprocess.run(shlex.split("git -C {} fetch".format(normalized_path)), check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"JominiTools: Failed to fetch from the {branch} branch: {e}")
             return
 
         try:
             subprocess.run(shlex.split("git -C {} pull".format(normalized_path)), check=True)
             print(f"JominiTools: Pulled changes for {normalized_path}")
         except subprocess.CalledProcessError as e:
-            print(f"JominiTools: Failed to update the {branch} branch: {e}")
+            print(f"JominiTools: Failed to pull from the {branch} branch: {e}")
