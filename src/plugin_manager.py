@@ -19,7 +19,6 @@ class PluginManager:
 
         try:
             cmd = ["git", "-C", normalized_path, "checkout", branch]
-            print(f"CHECKOUT with: {cmd}")
             subprocess.run(cmd, check=True, startupinfo=startupinfo)
         except FileNotFoundError as e:
             print(f"JominiTools: Error: Could not find 'git'. Please ensure Git is installed and available in your PATH.")
@@ -29,7 +28,6 @@ class PluginManager:
 
         try:
             cmd = ["git", "-C", normalized_path, "fetch"]
-            print(f"FETCH with: {cmd}")
             subprocess.run(cmd, check=True, startupinfo=startupinfo)
         except subprocess.CalledProcessError as e:
             print(f"JominiTools: Failed to fetch from the {branch} branch: {e}")
@@ -37,7 +35,6 @@ class PluginManager:
 
         try:
             cmd = ["git", "-C", normalized_path, "pull"]
-            print(f"JominiTools: Pulled changes for {normalized_path}")
             subprocess.run(cmd, check=True, startupinfo=startupinfo)
         except subprocess.CalledProcessError as e:
             print(f"JominiTools: Failed to pull from the {branch} branch: {e}")
