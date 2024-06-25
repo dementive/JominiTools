@@ -27,7 +27,7 @@ class ScopeMatch:
         # Get the starting bracket index from the syntax scopes
         trigger_regions = self.get_regions(view, "meta.trigger.bracket", view_str)
         effect_regions = self.get_regions(view, "meta.effect.bracket", view_str)
-        value_regions = self.get_regions(view, "meta.ai.bracket", view_str)
+        mtth_regions = self.get_regions(view, "meta.value.bracket", view_str)
         modifier_regions = self.get_regions(view, "meta.modifier.bracket", view_str)
 
         self.show_status(selection[0].a, trigger_regions, "trigger", view)
@@ -54,7 +54,7 @@ class ScopeMatch:
 
         self.show_status(selection[0].a, modifier_regions, "modifier", view)
 
-        self.show_status(selection[0].a, value_regions, "value", view)
+        self.show_status(selection[0].a, mtth_regions, "value", view)
 
         # For actual mtth fields that have a modifier = {} block inside of them, remove the modifier status
         if self.mtth_field and self.modifier_field:
