@@ -73,7 +73,7 @@ class Hover:
                                 margin: 0;
                             }
                         """
-            elif scope == "string.trigger":
+            elif scope == "string.trigger" or scope == "string.modifier.type":
                 style = """
                             body {
                                 font-family: system;
